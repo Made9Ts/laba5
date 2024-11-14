@@ -9,13 +9,14 @@
         android:id="@+id/instructionText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Это краткая инструкция по использованию приложения. Здесь вы можете добавить любой текст, который хотите."
+        android:text="Это краткая инструкция по использованию приложения. Здесь вы можете скачать расписание вашей группы"
         android:textSize="16sp" />
 
     <CheckBox
         android:id="@+id/dontShowAgainCheckbox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:minHeight="48dp"
         android:text="Больше не показывать" />
 
     <Button

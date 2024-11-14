@@ -2,12 +2,19 @@ package com.example.laba5;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,9 +28,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
+
     private EditText journalIdInput;
     private Button downloadButton, viewButton, deleteButton;
     private String filePath;
+
+    private static final String PREFS_NAME = "MyAppPrefs";
+    private static final String KEY_DONT_SHOW_AGAIN = "dontShowAgain";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +49,20 @@ public class MainActivity extends AppCompatActivity {
         downloadButton.setOnClickListener(v -> downloadFile());
         viewButton.setOnClickListener(v -> viewFile());
         deleteButton.setOnClickListener(v -> deleteFile());
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // Проверяем, нужно ли показывать всплывающее окно
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        boolean dontShowAgain = sharedPreferences.getBoolean(KEY_DONT_SHOW_AGAIN, false);
+
+        if (!dontShowAgain) {
+            // Отложенный показ PopupWindow
+            new Handler().postDelayed(this::showPopupWindow, 100);
+        }
     }
 
     private void downloadFile() {
@@ -140,6 +165,46 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Ошибка при удалении файла", Toast.LENGTH_SHORT).show();
             }
+        }
+    }
+
+    private void showPopupWindow() {
+        // Проверяем, что активность не завершена
+        if (isFinishing()) {
+            return; // Не показываем PopupWindow, если активность завершена
+        }
+
+        // Создаем PopupWindow
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.popup_window, null);
+
+        PopupWindow popupWindow = new PopupWindow(popupView,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+
+        // Находим элементы в popup
+        CheckBox dontShowAgainCheckbox = popupView.findViewById(R.id.dontShowAgainCheckbox);
+        Button okButton = popupView.findViewById(R.id.okButton);
+
+        // Устанавливаем обработчик нажатия на кнопку OK
+        okButton.setOnClickListener(v -> {
+            if (dontShowAgainCheckbox.isChecked()) {
+                // Сохраняем состояние чекбокса
+                SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putBoolean(KEY_DONT_SHOW_AGAIN, true);
+                editor.apply();
+            }
+            popupWindow.dismiss();
+        });
+
+        // Отображаем PopupWindow
+        popupWindow.setFocusable(true);
+        popupWindow.setOutsideTouchable(true);
+
+        // Проверяем, что активность не завершена
+        if (!isFinishing()) {
+            popupWindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
         }
     }
 }
